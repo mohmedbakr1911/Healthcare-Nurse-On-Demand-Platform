@@ -1,4 +1,5 @@
 const express = require("express");
+const pool = require('./db/db');
 const app = express();
 const port = 3000;
 
@@ -11,7 +12,7 @@ const signUpLoginRouter = require('./routes/signUpLogin.route');
 app.use(cors());
 app.use(express.json());
 
-app.use("/api", signUpLoginRouter)
+app.use("/api", signUpLoginRouter);
 
 // global middleware for not found router
 app.all(/.*/, (req, res) => {
@@ -23,6 +24,10 @@ app.use((error, req, res, next) => {
   res.status(error.statusCode || 500).json({status: error.httpStatusText || httpStatusText.ERROR, data: null, message: error.message, code: error.statusCode || 500});
 })
 
-app.listen(port, () => {
+app.listen(port, async() => {
+  const connected = await pool.connect()?true:false;
+  console.log()
+  console.log(`Database connection: ${connected}`); 
+  console.log()
   console.log(`Server is running at http://localhost:${port}`);
 });
