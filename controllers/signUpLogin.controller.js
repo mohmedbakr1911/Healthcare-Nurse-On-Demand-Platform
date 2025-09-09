@@ -14,14 +14,6 @@ const Signup = asyncWrapper(async (req, res, next) => {
     return next(new error("Invalid email format", 400));
   }
 
-  const userExists = await pool.query("SELECT * FROM users WHERE email = $1", [
-    email,
-  ]);
-
-  if (userExists.rows.length > 0) {
-    return next(new error("Email already registered", 400));
-  }
-
   if (password !== confirm_password) {
     return next(new error("Passwords do not match", 400));
   }
