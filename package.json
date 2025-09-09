@@ -1,5 +1,28 @@
 {
+<<<<<<< HEAD
   "dependencies": {
     "dotenv": "^17.2.2"
+=======
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+<<<<<<<< HEAD:Backend/package.json
+    "dotenv": "^17.2.2",
+========
+    "cors": "^2.8.5",
+>>>>>>>> 446adf5301ae5ebea1f35b8f137d5e3fbcc99a49:package.json
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "nodemon": "^3.1.10",
+    "pg": "^8.16.3"
+>>>>>>> 446adf5301ae5ebea1f35b8f137d5e3fbcc99a49
   }
 }
