@@ -6,5 +6,6 @@ const signUpLoginController = require("../controllers/signUpLogin.controller")
 
 router.post('/auth/register', signUpLoginController.Signup);
 router.post('/auth/login', signUpLoginController.signIn);
+router.get("/users/verify/:token", signUpLoginController.verifyEmail);
 
 module.exports = router;
