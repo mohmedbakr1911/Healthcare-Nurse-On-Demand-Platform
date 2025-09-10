@@ -24,7 +24,7 @@ const Signup = asyncWrapper(async (req, res, next) => {
   const verificationToken = crypto.randomBytes(32).toString("hex");
 
   const newUser = await pool.query(
-    "INSERT INTO users (email, password_hash, phone, user_type, verification_token) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+    "INSERT INTO users (email, password_hash, phone, user_type, verification_token) VALUES ($1, $2, $3, $4, $5) RETURNING *",
     [email, hashedPassword, phone, user_type, verificationToken]
   );
 
@@ -85,7 +85,7 @@ async function verifyEmail(req, res) {
     const user = result.rows[0];
 
     await pool.query(
-      "UPDATE users SET status = active, verification_token = NULL WHERE id = $1",
+      "UPDATE users SET status='active', verification_token=NULL WHERE id = $1",
       [user.id]
     );
 
