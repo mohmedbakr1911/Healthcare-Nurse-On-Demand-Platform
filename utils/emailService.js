@@ -26,7 +26,6 @@ async function sendVerificationEmail(to, token) {
   };
 
   const res = await transporter.sendMail(mailOptions);
-  console.log(res);
 }
 
 module.exports = { sendVerificationEmail };

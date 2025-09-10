@@ -6,6 +6,8 @@ const tokenMiddleware = require("../middlewares/Token");
 const validator = require("validator");
 const crypto = require("crypto");
 const {sendVerificationEmail} = require("../utils/emailService")
+const appError = require('../utils/appError')
+const httpStatusText = require("../utils/httpStatusText")
 
 const Signup = asyncWrapper(async (req, res, next) => {
   const { email, password, confirm_password, phone, user_type } = req.body;
@@ -39,8 +41,8 @@ const Signup = asyncWrapper(async (req, res, next) => {
   return res.status(201).json({
     message: "User registered successfully",
     user_id: newUser.rows[0].id,
-    access_token: token.access_token,
-    refresh_token: token.refresh_token,
+    access_token: token,
+    // refresh_token: token,
   });
 });
 
@@ -51,12 +53,18 @@ const signIn = asyncWrapper(async (req, res, next) => {
   ]);
 
   if (user.rows.length === 0) {
-    return next(new error("Invalid email or password", 401));
+    return next(appError.create("Invalid email or password", 401, httpStatusText.FAIL));
   }
   const passwordMatch = await bcrypt.compare(password, user.rows[0].password_hash);
 
   if (!passwordMatch) {
-    return next(new error("Invalid email or password", 401));
+    return next(appError.create("Invalid email or password", 401, httpStatusText.FAIL));
+  }
+
+  if(user.rows[0].status !== 'active')
+  {
+    await sendVerificationEmail(email, user.rows[0].verification_token);
+    return next(appError.create("Please Verify Email", 400, httpStatusText.FAIL));
   }
 
   const token = tokenMiddleware.generateToken(user.rows[0]);
@@ -64,8 +72,8 @@ const signIn = asyncWrapper(async (req, res, next) => {
   return res.status(200).json({
     message: "User signed in successfully",
     user_id: user.rows[0].id,
-    access_token: token.access_token,
-    refresh_token: token.refresh_token
+    access_token: token,
+    // refresh_token: token
   });
 });
 
@@ -85,7 +93,7 @@ async function verifyEmail(req, res) {
     const user = result.rows[0];
 
     await pool.query(
-      "UPDATE users SET status='active', verification_token=NULL WHERE id = $1",
+      "UPDATE users SET status = 'active', verification_token = NULL WHERE id = $1",
       [user.id]
     );
 
