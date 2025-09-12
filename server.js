@@ -9,10 +9,30 @@ const httpStatusText = require("./utils/httpStatusText");
 
 const signUpLoginRouter = require("./routes/signUpLogin.route");
 
+const passport = require("passport");
+const session = require("express-session");
+const passportSetup = require("./utils/passport_setup")
+
+// Session middleware
+app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false }));
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Passport setup
+passport.use(passportSetup);
+
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
+passport.deserializeUser((obj, done) => {
+  done(null, obj);
+});
+
+
 app.use(cors());
 app.use(express.json());
 
-app.use("/api", signUpLoginRouter);
+app.use("/api/auth", signUpLoginRouter);
 
 // global middleware for not found router
 app.all(/.*/, (req, res) => {
