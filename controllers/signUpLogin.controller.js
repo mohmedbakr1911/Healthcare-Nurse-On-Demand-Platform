@@ -28,8 +28,8 @@ const Signup = asyncWrapper(async (req, res, next) => {
   const expired_code_at = new Date(Date.now() + 10 * 60 * 1000);
 
   const newUser = await pool.query(
-    "INSERT INTO users (email, password_hash, phone, user_type, verification_code, code_expires_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-    [email, hashedPassword, phone, user_type, verifictionCode, expired_code_at]
+    "INSERT INTO users (email, password_hash, phone, user_type, verification_code, code_expires_at, provider) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
+    [email, hashedPassword, phone, user_type, verifictionCode, expired_code_at, "local"]
   );
 
 
