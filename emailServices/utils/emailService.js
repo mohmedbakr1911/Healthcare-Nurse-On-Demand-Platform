@@ -11,22 +11,21 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-async function sendVerificationEmail(to, token) {
-  const verifyUrl = `${process.env.BASE_URL}/api/users/verify/${token}`;
-
+async function sendVerificationEmail(to, code) {
   const mailOptions = {
-    from: `"My App" <${process.env.EMAIL_USER}>`,
+    from: `"health-care-nurse-on-demand" <${process.env.EMAIL_USER}>`,
     to,
-    subject: "Verify your email",
+    subject: "Your verification code",
     html: `
       <h2>Welcome!</h2>
-      <p>Click the link below to verify your email:</p>
-      <a href="${verifyUrl}">${verifyUrl}</a>
+      <p>Enter the code below to verify your email:</p>
+      <h1>${code}</h1>
+      <p>This code will expire in 10 minutes.</p>
     `
   };
 
-  const res = await transporter.sendMail(mailOptions);
-  console.log(res);
+  return transporter.sendMail(mailOptions);
 }
+
 
 module.exports = { sendVerificationEmail };
