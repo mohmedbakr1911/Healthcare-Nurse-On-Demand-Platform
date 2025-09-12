@@ -5,7 +5,7 @@ const bcrypt = require("bcrypt");
 const tokenMiddleware = require("../middlewares/Token");
 const validator = require("validator");
 const crypto = require("crypto");
-const {sendVerificationEmail} = require("../utils/emailService")
+const {sendVerificationEmail} = require("../emailServices/utils/emailService")
 
 const Signup = asyncWrapper(async (req, res, next) => {
   const { email, password, confirm_password, phone, user_type } = req.body;
