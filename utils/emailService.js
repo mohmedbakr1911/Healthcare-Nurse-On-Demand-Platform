@@ -12,10 +12,10 @@ const transporter = nodemailer.createTransport({
 });
 
 async function sendVerificationEmail(to, token) {
-  const verifyUrl = `${process.env.BASE_URL}/api/users/verify/${token}`;
+  const verifyUrl = `${process.env.BASE_URL}/api/auth/verify/${token}`;
 
   const mailOptions = {
-    from: `"My App" <${process.env.EMAIL_USER}>`,
+    from: `"Care now" <${process.env.EMAIL_USER}>`,
     to,
     subject: "Verify your email",
     html: `
