@@ -1,13 +1,13 @@
 const express = require("express");
-const pool = require('./db/db');
+const pool = require("./db/db");
 const app = express();
 const port = 3000;
 
 const cors = require("cors");
 
-const httpStatusText = require('./utils/httpStatusText')
+const httpStatusText = require("./utils/httpStatusText");
 
-const signUpLoginRouter = require('./routes/signUpLogin.route');
+const signUpLoginRouter = require("./routes/signUpLogin.route");
 
 app.use(cors());
 app.use(express.json());
@@ -21,13 +21,18 @@ app.all(/.*/, (req, res) => {
 
 // global error handler
 app.use((error, req, res, next) => {
-  res.status(error.statusCode || 500).json({status: error.httpStatusText || httpStatusText.ERROR, data: null, message: error.message, code: error.statusCode || 500});
-})
+  res.status(error.statusCode || 500).json({
+    status: error.httpStatusText || httpStatusText.ERROR,
+    data: null,
+    message: error.message,
+    code: error.statusCode || 500,
+  });
+});
 
-app.listen(port, async() => {
-  const connected = await pool.connect()?true:false;
-  console.log()
-  console.log(`Database connection: ${connected}`); 
-  console.log()
+app.listen(port, async () => {
+  const connected = (await pool.connect()) ? true : false;
+  console.log();
+  console.log(`Database connection: ${connected}`);
+  console.log();
   console.log(`Server is running at http://localhost:${port}`);
 });
