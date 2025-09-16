@@ -5,8 +5,8 @@ const bcrypt = require("bcrypt");
 const tokenMiddleware = require("../middlewares/Token");
 const validator = require("validator");
 const crypto = require("crypto");
-const {sendVerificationEmail} = require("../utils/emailService");
-const appError = require('../utils/appError');
+const { sendVerificationEmail } = require("../utils/emailService");
+const appError = require("../utils/appError");
 const httpStatusText = require("../utils/httpStatusText");
 
 const Signup = asyncWrapper(async (req, res, next) => {
@@ -23,15 +23,21 @@ const Signup = asyncWrapper(async (req, res, next) => {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const verifictionCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const verifictionCode = Math.floor(
+    100000 + Math.random() * 900000
+  ).toString();
 
   const expired_code_at = new Date(Date.now() + 10 * 60 * 1000);
 
   const newUser = await pool.query(
-    "INSERT INTO users (email, password_hash, phone, user_type, verification_code, code_expires_at, provider) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
-    [email, hashedPassword, phone, user_type, verifictionCode, expired_code_at, "local"]
+    "INSERT INTO users (email, phone, user_type, provider) VALUES ($1, $2, $3, $4) RETURNING *",
+    [email, phone, user_type, "local"]
   );
 
+  const userCredentials = await pool.query(
+    "INSERT INTO credentials (user_id, password_hash, verification_code, code_expires_at) VALUES ($1, $2, $3, $4) RETURNING *",
+    [newUser.rows[0].id, hashedPassword, verifictionCode, expired_code_at]
+  );
 
   await sendVerificationEmail(email, verifictionCode);
 
@@ -43,73 +49,121 @@ const Signup = asyncWrapper(async (req, res, next) => {
     status: httpStatusText.SUCCESS,
     data: {
       user_id: newUser.rows[0].id,
-    }
+    },
   });
 });
 
 const signIn = asyncWrapper(async (req, res, next) => {
   const { email, password } = req.body;
-  const user = await pool.query("SELECT * FROM users WHERE email = $1", [
-    email,
-  ]);
-
-  if (user.rows.length === 0) {
-    return next(appError.create("Invalid email or password", 401, httpStatusText.FAIL));
-  }
-  const passwordMatch = await bcrypt.compare(password, user.rows[0].password_hash);
-
-  if (!passwordMatch) {
-    return next(appError.create("Invalid email or password", 401, httpStatusText.FAIL));
-  }
-
-
-  if(user.rows[0].status !== 'active')
-  {
-    const verifictionCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const expired_code_at = new Date(Date.now() + 10 * 60 * 1000);
-    pool.query("UPDATE users SET verification_code = $1, code_expires_at = $2 WHERE email = $3",
-      [verifictionCode, expired_code_at, email]
-    )
-    await sendVerificationEmail(email, verifictionCode);
-    return next(appError.create("Please Verify Email", 400, httpStatusText.FAIL));
-  }
-
-  const token = tokenMiddleware.generateToken(user.rows[0]);
-
-  return res.status(200).json({
-    status: httpStatusText.SUCCESS,
-    data:{
-      user_id: user.rows[0].id,
-      access_token: token,
-      // refresh_token: token
-    }
-  });
-});
-
-const verifyEmail  = asyncWrapper( async (req, res, next) => {
-  const { email, code } = req.body;
-
-  const user = await pool.query(
-    "SELECT * FROM users WHERE email = $1 AND verification_code = $2 AND code_expires_at > NOW()",
-    [email, code]
-  );
-
-  if (!user.rows.length) {
-    return next(appError.create("Invalid or expired code", 400, httpStatusText.FAIL));
-  }
-
-  await pool.query(
-    "UPDATE users SET status = 'active', verification_code = NULL, code_expires_at = NULL WHERE email = $1",
+  const result = await pool.query(
+    `SELECT u.*, c.*
+    FROM users u
+    JOIN credentials c ON u.id = c.user_id
+    WHERE u.email = $1`,
     [email]
   );
 
+  if (result.rows.length === 0) {
+    return next(
+      appError.create("Invalid email or password", 401, httpStatusText.FAIL)
+    );
+  }
+  const passwordMatch = await bcrypt.compare(
+    password,
+    result.rows[0].password_hash
+  );
+
+  if (!passwordMatch) {
+    return next(
+      appError.create("Invalid email or password", 401, httpStatusText.FAIL)
+    );
+  }
+
+  if (result.rows[0].status !== "active") {
+    const verifictionCode = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
+    const expired_code_at = new Date(Date.now() + 10 * 60 * 1000);
+    await pool.query(
+      `UPDATE credentials
+      SET verification_code = $1,
+          code_expires_at = $2
+      WHERE user_id = (
+        SELECT id FROM users WHERE email = $3
+      )`,
+      [verifictionCode, expired_code_at, email]
+    );
+    await sendVerificationEmail(email, verifictionCode);
+    return next(
+      appError.create("Please Verify Email", 400, httpStatusText.FAIL)
+    );
+  }
+
+  const token = tokenMiddleware.generateToken(result.rows[0]);
+
+  return res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    data: {
+      access_token: token,
+      // refresh_token: token
+    },
+  });
+});
+
+const verifyEmail = asyncWrapper(async (req, res, next) => {
+  const { email, code } = req.body;
+
+  const user = await pool.query(
+    `SELECT u.*
+      FROM users u
+      JOIN credentials c ON u.id = c.user_id
+      WHERE u.email = $1
+      AND c.verification_code = $2
+      AND c.code_expires_at > NOW()`,
+    [email, code]
+  );
+
+  console.log("User: ", user.rows[0]);
+  if (!user.rows.length) {
+    return next(
+      appError.create("Invalid or expired code", 400, httpStatusText.FAIL)
+    );
+  }
+
+  await pool.query(
+    "UPDATE credentials SET status = 'active', verification_code = NULL, code_expires_at = NULL WHERE user_id = $1",
+    [user.rows[0].id]
+  );
+
   const token = tokenMiddleware.generateToken(user.rows[0]);
 
-  res.status(200).json({ status: httpStatusText.SUCCESS , data: {access_token: token}});
+  res
+    .status(200)
+    .json({ status: httpStatusText.SUCCESS, data: { access_token: token } });
+});
+
+const callback = asyncWrapper(async (req, res) => {
+  const email = req.user.emails[0].value;
+
+  const user = await pool.query("SELECT * FROM users WHERE email = $1", [
+    email,
+  ]);
+  if (user.rows.length === 0) {
+    const newUser = await pool.query(
+      "INSERT INTO users (email, provider) VALUES ($1, $2) RETURNING *",
+      [email, "google"]
+    );
+    const token = tokenMiddleware.generateToken(newUser.rows[0]);
+    res.redirect(`${process.env.FRONT_URL}/completeData?token=${token}`);
+  }
+
+  const token = tokenMiddleware.generateToken(user.rows[0]);
+  res.redirect(`${process.env.FRONT_URL}?token=${token}`);
 });
 
 module.exports = {
   signIn,
   Signup,
-  verifyEmail
+  verifyEmail,
+  callback,
 };
