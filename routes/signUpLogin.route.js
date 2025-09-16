@@ -12,11 +12,11 @@ router.get(
   "/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
-
 router.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
   signUpLoginController.callback
 );
+router.patch("/completeData", signUpLoginController.completeData);
 
 module.exports = router;

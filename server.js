@@ -8,13 +8,20 @@ const cors = require("cors");
 const httpStatusText = require("./utils/httpStatusText");
 
 const signUpLoginRouter = require("./routes/signUpLogin.route");
+const nurse_patient_user_profile = require("./routes/nurse_patient_user_profile.route");
 
 const passport = require("passport");
 const session = require("express-session");
-const passportSetup = require("./utils/passport_setup")
+const passportSetup = require("./utils/passport_setup");
 
 // Session middleware
-app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false }));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+  })
+);
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -28,11 +35,11 @@ passport.deserializeUser((obj, done) => {
   done(null, obj);
 });
 
-
 app.use(cors());
 app.use(express.json());
 
 app.use("/api/auth", signUpLoginRouter);
+app.use("/api/profile", nurse_patient_user_profile);
 
 // global middleware for not found router
 app.all(/.*/, (req, res) => {

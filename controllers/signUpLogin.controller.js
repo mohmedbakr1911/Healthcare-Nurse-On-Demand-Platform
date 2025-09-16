@@ -161,9 +161,18 @@ const callback = asyncWrapper(async (req, res) => {
   res.redirect(`${process.env.FRONT_URL}?token=${token}`);
 });
 
+const completeData = asyncWrapper(async (req, res, next) => {
+  const { user_id, user_type, phone } = req.body;
+  await pool.query(
+    "UPDATE users SET user_type = $1, phone = $2 WHERE user_id = $3",
+    [user_type, phone, user_id]
+  );
+});
+
 module.exports = {
   signIn,
   Signup,
   verifyEmail,
   callback,
+  completeData,
 };
