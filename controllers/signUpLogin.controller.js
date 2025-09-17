@@ -5,7 +5,10 @@ const bcrypt = require("bcrypt");
 const tokenMiddleware = require("../middlewares/Token");
 const validator = require("validator");
 const crypto = require("crypto");
-const { sendVerificationEmail } = require("../utils/emailService");
+const {
+  sendVerificationEmail,
+  sendResetPasswordEmail,
+} = require("../utils/emailService");
 const appError = require("../utils/appError");
 const httpStatusText = require("../utils/httpStatusText");
 
@@ -123,7 +126,6 @@ const verifyEmail = asyncWrapper(async (req, res, next) => {
     [email, code]
   );
 
-  console.log("User: ", user.rows[0]);
   if (!user.rows.length) {
     return next(
       appError.create("Invalid or expired code", 400, httpStatusText.FAIL)
@@ -179,10 +181,57 @@ const completeData = asyncWrapper(async (req, res, next) => {
   });
 });
 
+const resetPasswordRequest = asyncWrapper(async (req, res, next) => {
+  const { email } = req.body;
+  const user = await pool.query("SELECT * FROM users WHERE email = $1", [
+    email,
+  ]);
+
+  if (user.rows.length === 0) {
+    return next(appError.create("User not found", 404, httpStatusText.FAIL));
+  }
+
+  const resetToken = tokenMiddleware.generateToken(user.rows[0]);
+  await sendResetPasswordEmail(email, resetToken);
+
+  return res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    message: "Reset password email sent",
+  });
+});
+
+const resetPassword = asyncWrapper(async (req, res, next) => {
+  const { new_password, confirm_password } = req.body;
+
+  if (new_password !== confirm_password) {
+    return next(
+      appError.create("Passwords do not match", 400, httpStatusText.FAIL)
+    );
+  }
+
+  if (!req.currentUser)
+    return next(
+      appError.create("Invalid or expired token", 400, httpStatusText.FAIL)
+    );
+
+  const hashedPassword = await bcrypt.hash(new_password, 10);
+  await pool.query(
+    "UPDATE credentials SET password_hash = $1 WHERE user_id = $2",
+    [hashedPassword, req.currentUser.id]
+  );
+
+  return res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    message: "Password has been reset successfully",
+  });
+});
+
 module.exports = {
   signIn,
   Signup,
   verifyEmail,
   callback,
   completeData,
+  resetPasswordRequest,
+  resetPassword,
 };
