@@ -162,11 +162,21 @@ const callback = asyncWrapper(async (req, res) => {
 });
 
 const completeData = asyncWrapper(async (req, res, next) => {
-  const { user_id, user_type, phone } = req.body;
-  await pool.query(
-    "UPDATE users SET user_type = $1, phone = $2 WHERE user_id = $3",
-    [user_type, phone, user_id]
+  const { user_type, phone } = req.body;
+  const updatedUser = await pool.query(
+    "UPDATE users SET user_type = $1, phone = $2 WHERE id = $3 RETURNING *",
+    [user_type, phone, req.currentUser.id]
   );
+
+  const token = tokenMiddleware.generateToken(updatedUser.rows[0]);
+
+  return res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    data: {
+      access_token: token,
+      // refresh_token: token
+    },
+  });
 });
 
 module.exports = {

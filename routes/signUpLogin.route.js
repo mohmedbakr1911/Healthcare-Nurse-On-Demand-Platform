@@ -4,6 +4,7 @@ const router = express.Router();
 const passport = require("passport");
 
 const signUpLoginController = require("../controllers/signUpLogin.controller");
+const { verifyToken } = require("../middlewares/Token");
 
 router.post("/register", signUpLoginController.Signup);
 router.post("/login", signUpLoginController.signIn);
@@ -17,6 +18,6 @@ router.get(
   passport.authenticate("google", { failureRedirect: "/login" }),
   signUpLoginController.callback
 );
-router.patch("/completeData", signUpLoginController.completeData);
+router.patch("/completeData", verifyToken, signUpLoginController.completeData);
 
 module.exports = router;

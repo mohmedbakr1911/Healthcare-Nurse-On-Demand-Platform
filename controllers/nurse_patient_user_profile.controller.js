@@ -5,7 +5,6 @@ const httpStatusText = require("../utils/httpStatusText");
 
 const createPatientProfile = asyncWrapper(async (req, res, next) => {
   const {
-    user_id,
     first_name,
     last_name,
     date_of_birth,
@@ -19,7 +18,7 @@ const createPatientProfile = asyncWrapper(async (req, res, next) => {
   const newPatient = await pool.query(
     "INSERT INTO patient_profiles (user_id, first_name, last_name, date_of_birth, gender, address, emergency_contact, medical_history, insurance_info, preferences) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
     [
-      user_id,
+      req.currentUser.id,
       first_name,
       last_name,
       date_of_birth,
@@ -45,7 +44,6 @@ const createPatientProfile = asyncWrapper(async (req, res, next) => {
 
 const createNurseProfile = asyncWrapper(async (req, res, next) => {
   const {
-    user_id,
     first_name,
     last_name,
     license_number,
@@ -61,7 +59,7 @@ const createNurseProfile = asyncWrapper(async (req, res, next) => {
   const newNurse = await pool.query(
     "INSERT INTO nurse_profiles (user_id, first_name, last_name, license_number, license_state, license_expiry, specializations, years_experience, hourly_rate, service_radius, verification_status, availability_schedule) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *",
     [
-      user_id,
+      req.currentUser.id,
       first_name,
       last_name,
       license_number,
