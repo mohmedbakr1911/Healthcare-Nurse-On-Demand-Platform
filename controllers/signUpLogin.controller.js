@@ -48,22 +48,6 @@ const Signup = asyncWrapper(async (req, res, next) => {
     return next(new error("User registration failed", 500));
   }
 
-  // if (newUser.rows[0].user_type === "patient") {
-  //   const patient_profiles = await pool.query(
-  //     "INSERT INTO patient_profiles (user_id) VALUES ($1) RETURNING *",
-  //     [newUser.rows[0].id]
-  //   );
-  //   console.log(patient_profiles.rows[0]);
-  // } else if (newUser.rows[0].user_type === "nurse") {
-
-  //   const nurse_profiles = await pool.query(
-  //     "INSERT INTO nurse_profiles (user_id) VALUES ($1) RETURNING *",
-  //     [newUser.rows[0].id]
-  //   );
-
-  //   console.log(nurse_profiles.rows[0]);
-  // }
-
   return res.status(201).json({
     status: httpStatusText.SUCCESS,
     data: {
