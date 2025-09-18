@@ -19,5 +19,14 @@ router.get(
   signUpLoginController.callback
 );
 router.patch("/completeData", verifyToken, signUpLoginController.completeData);
+router.post(
+  "/resetPasswordRequest",
+  signUpLoginController.resetPasswordRequest
+);
+router.patch(
+  "/resetPassword",
+  verifyToken,
+  signUpLoginController.resetPassword
+);
 
 module.exports = router;
