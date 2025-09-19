@@ -4,7 +4,12 @@ const appError = require("../utils/appError");
 
 const generateToken = (user) => {
   return jwt.sign(
-    { id: user.id, email: user.email, user_type: user.user_type },
+    {
+      id: user.id,
+      email: user.email,
+      user_type: user.user_type,
+      profile_created: user.profile_created,
+    },
     process.env.JWT_SECRET_KEY,
     { expiresIn: "1h" }
   );

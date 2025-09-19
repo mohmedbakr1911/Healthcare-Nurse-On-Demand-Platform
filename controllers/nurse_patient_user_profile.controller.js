@@ -4,6 +4,16 @@ const appError = require("../utils/appError");
 const httpStatusText = require("../utils/httpStatusText");
 
 const createPatientProfile = asyncWrapper(async (req, res, next) => {
+  if (req.currentUser.user_type !== "patient") {
+    return next(
+      appError.create(
+        "Only patients can create patient profiles",
+        403,
+        httpStatusText.FAIL
+      )
+    );
+  }
+
   const {
     first_name,
     last_name,
@@ -39,10 +49,24 @@ const createPatientProfile = asyncWrapper(async (req, res, next) => {
       )
     );
   }
+  await pool.query("UPDATE users SET profile_created = TRUE WHERE id = $1", [
+    req.currentUser.id,
+  ]);
+
   res.status(201).json({ status: httpStatusText.SUCCESS, data: null });
 });
 
 const createNurseProfile = asyncWrapper(async (req, res, next) => {
+  if (req.currentUser.user_type !== "nurse") {
+    return next(
+      appError.create(
+        "Only nurses can create nurse profiles",
+        403,
+        httpStatusText.FAIL
+      )
+    );
+  }
+
   const {
     first_name,
     last_name,
@@ -78,15 +102,16 @@ const createNurseProfile = asyncWrapper(async (req, res, next) => {
       appError.create("Nurse profile creation failed", 400, httpStatusText.FAIL)
     );
   }
+
+  await pool.query("UPDATE users SET profile_created = TRUE WHERE id = $1", [
+    req.currentUser.id,
+  ]);
+
   res.status(201).json({ status: httpStatusText.SUCCESS, data: null });
 });
 
-
-
-
-
 const updatePatientProfile = asyncWrapper(async (req, res, next) => {
-  const { id } = req.currentUser; 
+  const { id } = req.currentUser;
   const fields = req.body;
 
   if (Object.keys(fields).length === 0) {
@@ -159,9 +184,6 @@ const updateNurseProfile = asyncWrapper(async (req, res, next) => {
     data: result.rows[0],
   });
 });
-
-
-
 
 module.exports = {
   createPatientProfile,
