@@ -6,15 +6,17 @@ const verifyToken = require("../middlewares/Token").verifyToken;
 
 router
   .route("/patient")
-  .post(verifyToken, nurse_patient_user_profile_controller.createPatientProfile)
-  .patch(
+  .post(
     verifyToken,
-    nurse_patient_user_profile_controller.updatePatientProfile
+    nurse_patient_user_profile_controller.createPatientProfile
   );
 
 router
   .route("/nurse")
-  .post(verifyToken, nurse_patient_user_profile_controller.createNurseProfile)
-  .patch(verifyToken, nurse_patient_user_profile_controller.updateNurseProfile);
+  .post(verifyToken, nurse_patient_user_profile_controller.createNurseProfile);
+
+router
+  .route("/")
+  .patch(verifyToken, nurse_patient_user_profile_controller.updateProfile);
 
 module.exports = router;

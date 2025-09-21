@@ -110,9 +110,10 @@ const createNurseProfile = asyncWrapper(async (req, res, next) => {
   res.status(201).json({ status: httpStatusText.SUCCESS, data: null });
 });
 
-const updatePatientProfile = asyncWrapper(async (req, res, next) => {
+const updateProfile = asyncWrapper(async (req, res, next) => {
   const { id } = req.currentUser;
   const fields = req.body;
+  const user_type = req.currentUser.user_type;
 
   if (Object.keys(fields).length === 0) {
     return next(
@@ -128,7 +129,7 @@ const updatePatientProfile = asyncWrapper(async (req, res, next) => {
   const values = Object.values(fields);
 
   const query = `
-    UPDATE patient_profiles 
+    UPDATE ${user_type === "nurse" ? "nurse_profiles" : "patient_profiles"} 
     SET ${setClause} 
     WHERE user_id = $${values.length + 1}
     RETURNING *;
@@ -138,44 +139,11 @@ const updatePatientProfile = asyncWrapper(async (req, res, next) => {
 
   if (result.rowCount === 0) {
     return next(
-      appError.create("Patient profile not found", 404, httpStatusText.FAIL)
-    );
-  }
-
-  res.status(200).json({
-    status: httpStatusText.SUCCESS,
-    data: result.rows[0],
-  });
-});
-
-const updateNurseProfile = asyncWrapper(async (req, res, next) => {
-  const { id } = req.currentUser; // logged-in user
-  const fields = req.body;
-
-  if (Object.keys(fields).length === 0) {
-    return next(
-      appError.create("No fields provided", 400, httpStatusText.FAIL)
-    );
-  }
-
-  const setClause = Object.keys(fields)
-    .map((key, idx) => `${key} = $${idx + 1}`)
-    .join(", ");
-
-  const values = Object.values(fields);
-
-  const query = `
-    UPDATE nurse_profiles 
-    SET ${setClause} 
-    WHERE user_id = $${values.length + 1}
-    RETURNING *;
-  `;
-
-  const result = await pool.query(query, [...values, id]);
-
-  if (result.rowCount === 0) {
-    return next(
-      appError.create("Nurse profile not found", 404, httpStatusText.FAIL)
+      appError.create(
+        `${user_type === "nurse" ? "Nurse" : "Patient"} profile not found`,
+        404,
+        httpStatusText.FAIL
+      )
     );
   }
 
@@ -188,6 +156,5 @@ const updateNurseProfile = asyncWrapper(async (req, res, next) => {
 module.exports = {
   createPatientProfile,
   createNurseProfile,
-  updatePatientProfile,
-  updateNurseProfile,
+  updateProfile,
 };
