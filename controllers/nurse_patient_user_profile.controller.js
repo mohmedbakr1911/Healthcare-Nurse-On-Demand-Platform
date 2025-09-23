@@ -14,6 +14,8 @@ const createPatientProfile = asyncWrapper(async (req, res, next) => {
     );
   }
 
+  const imagePath = req.file ? req.file.path : process.env.DEFAULT_AVATAR;
+
   const {
     first_name,
     last_name,
@@ -26,7 +28,7 @@ const createPatientProfile = asyncWrapper(async (req, res, next) => {
     preferences,
   } = req.body;
   const newPatient = await pool.query(
-    "INSERT INTO patient_profiles (user_id, first_name, last_name, date_of_birth, gender, address, emergency_contact, medical_history, insurance_info, preferences) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
+    "INSERT INTO patient_profiles (user_id, first_name, last_name, date_of_birth, gender, address, emergency_contact, medical_history, insurance_info, preferences, profile_picture) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *",
     [
       req.currentUser.id,
       first_name,
@@ -38,6 +40,7 @@ const createPatientProfile = asyncWrapper(async (req, res, next) => {
       medical_history,
       insurance_info,
       preferences,
+      imagePath,
     ]
   );
   if (!newPatient) {
@@ -66,6 +69,7 @@ const createNurseProfile = asyncWrapper(async (req, res, next) => {
       )
     );
   }
+  const imagePath = req.file ? req.file.path : process.env.DEFAULT_AVATAR;
 
   const {
     first_name,
@@ -81,7 +85,7 @@ const createNurseProfile = asyncWrapper(async (req, res, next) => {
     availability_schedule,
   } = req.body;
   const newNurse = await pool.query(
-    "INSERT INTO nurse_profiles (user_id, first_name, last_name, license_number, license_state, license_expiry, specializations, years_experience, hourly_rate, service_radius, verification_status, availability_schedule) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *",
+    "INSERT INTO nurse_profiles (user_id, first_name, last_name, license_number, license_state, license_expiry, specializations, years_experience, hourly_rate, service_radius, verification_status, availability_schedule, profile_picture) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *",
     [
       req.currentUser.id,
       first_name,
@@ -95,6 +99,7 @@ const createNurseProfile = asyncWrapper(async (req, res, next) => {
       service_radius,
       verification_status,
       availability_schedule,
+      imagePath,
     ]
   );
   if (!newNurse) {
@@ -153,8 +158,55 @@ const updateProfile = asyncWrapper(async (req, res, next) => {
   });
 });
 
+const getProfile = asyncWrapper(async (req, res, next) => {
+  const { id } = req.currentUser;
+  const user_type = req.currentUser.user_type;
+
+  const query = `
+    SELECT * FROM ${
+      user_type === "nurse" ? "nurse_profiles" : "patient_profiles"
+    }
+    WHERE user_id = $1
+  `;
+
+  const result = await pool.query(query, [id]);
+
+  if (result.rowCount === 0) {
+    return next(
+      appError.create(
+        `${user_type === "nurse" ? "Nurse" : "Patient"} profile not found`,
+        404,
+        httpStatusText.FAIL
+      )
+    );
+  }
+
+  res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    data: result.rows[0],
+  });
+});
+
+const getNurses = asyncWrapper(async (req, res, next) => {
+  const nurses = await pool.query(
+    "SELECT user_id, availability_schedule, hourly_rate, specializations FROM nurse_profiles"
+  );
+
+  const nursesWithLocation = nurses.rows.map((nurse) => ({
+    ...nurse,
+    location: "Cairo",
+  }));
+
+  res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    data: nursesWithLocation,
+  });
+});
+
 module.exports = {
   createPatientProfile,
   createNurseProfile,
   updateProfile,
+  getProfile,
+  getNurses,
 };
