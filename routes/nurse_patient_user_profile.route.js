@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 
 const nurse_patient_user_profile_controller = require("../controllers/nurse_patient_user_profile.controller");
-const verifyToken = require("../middlewares/Token").verifyToken;
+const { verifyToken } = require("../middlewares/Token");
+const apiKeyAuth = require("../middlewares/apiKeyAuth");
 
 const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
@@ -45,7 +46,8 @@ router
     verifyToken,
     upload.single("profile_picture"),
     nurse_patient_user_profile_controller.createNurseProfile
-  );
+  )
+  .get(apiKeyAuth, nurse_patient_user_profile_controller.getNurses);
 
 router
   .route("/")

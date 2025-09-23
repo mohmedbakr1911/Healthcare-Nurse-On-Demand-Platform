@@ -187,9 +187,26 @@ const getProfile = asyncWrapper(async (req, res, next) => {
   });
 });
 
+const getNurses = asyncWrapper(async (req, res, next) => {
+  const nurses = await pool.query(
+    "SELECT user_id, availability_schedule, hourly_rate, specializations FROM nurse_profiles"
+  );
+
+  const nursesWithLocation = nurses.rows.map((nurse) => ({
+    ...nurse,
+    location: "Cairo",
+  }));
+
+  res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    data: nursesWithLocation,
+  });
+});
+
 module.exports = {
   createPatientProfile,
   createNurseProfile,
   updateProfile,
   getProfile,
+  getNurses,
 };
