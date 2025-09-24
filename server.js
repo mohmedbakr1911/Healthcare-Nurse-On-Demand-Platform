@@ -9,6 +9,7 @@ const httpStatusText = require("./utils/httpStatusText");
 
 const signUpLoginRouter = require("./routes/signUpLogin.route");
 const nurse_patient_user_profile = require("./routes/nurse_patient_user_profile.route");
+const serviceRouter = require("./routes/service.route");
 
 const passport = require("passport");
 const session = require("express-session");
@@ -40,6 +41,7 @@ app.use(express.json());
 
 app.use("/api/auth", signUpLoginRouter);
 app.use("/api/profile", nurse_patient_user_profile);
+app.use("/api/service", serviceRouter);
 
 // global middleware for not found router
 app.all(/.*/, (req, res) => {
