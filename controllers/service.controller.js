@@ -57,4 +57,22 @@ const createServiceRequest = asyncWrapper(async (req, res, next) => {
   }
 });
 
-module.exports = { createServiceRequest };
+const getPatientServise = asyncWrapper(async (req, res, next) => {
+  const currentUser = req.currentUser;
+
+  if (currentUser) {
+    const service = await pool.query(
+      `SELECT * FROM service_requests WHERE patient_id = $1`,
+      [req.currentUser.id]
+    );
+
+    res.status(200).json({
+      status: httpStatusText.SUCCESS,
+      data: service.rows[0],
+    });
+  }
+
+  return next(appError.create(500, "Error fetching nurse results"));
+});
+
+module.exports = { createServiceRequest, getPatientServise };
