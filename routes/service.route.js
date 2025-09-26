@@ -6,4 +6,8 @@ const { verifyToken } = require("../middlewares/Token");
 
 router.route("/").post(verifyToken, serviceController.createServiceRequest);
 
+router
+  .route("/complete")
+  .patch(verifyToken, serviceController.completeServiceRequest);
+
 module.exports = router;

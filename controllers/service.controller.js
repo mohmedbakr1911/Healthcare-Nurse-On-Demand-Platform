@@ -57,4 +57,23 @@ const createServiceRequest = asyncWrapper(async (req, res, next) => {
   }
 });
 
-module.exports = { createServiceRequest };
+const completeServiceRequest = asyncWrapper(async (req, res, next) => {
+  const { serviceRequestId, nurse_id } = req.body;
+
+  const serviceRequest = await pool.query(
+    `UPDATE service_requests SET status = 'matched', nurse_id = $1 WHERE id = $2 RETURNING *`,
+    [nurse_id, serviceRequestId]
+  );
+
+  if (serviceRequest.rowCount === 0) {
+    return next(
+      appError.create(404, "Service request not found or could not be updated")
+    );
+  }
+  res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    data: { serviceRequest: serviceRequest.rows[0] },
+  });
+});
+
+module.exports = { createServiceRequest, completeServiceRequest };
