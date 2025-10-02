@@ -43,6 +43,33 @@ app.use("/api/auth", signUpLoginRouter);
 app.use("/api/profile", nurse_patient_user_profile);
 app.use("/api/service", serviceRouter);
 
+const bodyParser = require("body-parser");
+app.use(bodyParser.json());
+app.post("/api/paymob/webhook", (req, res) => {
+  // const obj = req.body;
+  // if (obj.success === true) {
+  //   console.log("✅ Payment successful:", obj);
+  //   // update your database, mark order as paid
+  // } else {
+  //   console.log("❌ Payment failed:", obj);
+  // }
+  // res.sendStatus(200);
+  console.log("Webhook received:", req.body);
+  res.sendStatus(200);
+});
+
+const { getPaymentKey } = require("./utils/payment.js");
+app.post("/create-payment", async (req, res) => {
+  try {
+    const { amount } = req.body; // E.g. 1000 = 10 EGP
+    const paymentKey = await getPaymentKey(amount);
+    res.json({ paymentKey }); // Send result to frontend
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Payment key generation failed");
+  }
+});
+
 // global middleware for not found router
 app.all(/.*/, (req, res) => {
   res.status(404).json({ message: "URL Not Found" });
