@@ -7,6 +7,7 @@ const generateToken = (user) => {
     {
       id: user.id,
       email: user.email,
+      phone: user.phone,
       user_type: user.user_type,
       profile_created: user.profile_created,
     },
