@@ -10,6 +10,11 @@ const pool = new Pool({
   ssl: {
     rejectUnauthorized: false, // allows insecure/self-signed certificates
   },
+  idleTimeoutMillis: 10000,
 });
 
+pool.on("error", (err, client) => {
+  console.error("Unexpected error on idle client", err);
+  // The pool should handle the replacement, but this prevents the Node process crash.
+});
 module.exports = pool;
