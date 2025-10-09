@@ -39,8 +39,7 @@ async function sendResetPasswordEmail(to, token) {
     `,
   };
 
-  console.log(`${process.env.FRONT_URL}/resetPassword?token=${token}`);
-  // return transporter.sendMail(mailOptions);
+  return transporter.sendMail(mailOptions);
 }
 
 module.exports = { sendVerificationEmail, sendResetPasswordEmail };
