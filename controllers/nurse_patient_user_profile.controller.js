@@ -21,21 +21,19 @@ const createPatientProfile = asyncWrapper(async (req, res, next) => {
     last_name,
     date_of_birth,
     gender,
-    address,
     emergency_contact,
     medical_history,
     insurance_info,
     preferences,
   } = req.body;
   const newPatient = await pool.query(
-    "INSERT INTO patient_profiles (user_id, first_name, last_name, date_of_birth, gender, address, emergency_contact, medical_history, insurance_info, preferences, profile_picture) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *",
+    "INSERT INTO patient_profiles (user_id, first_name, last_name, date_of_birth, gender, emergency_contact, medical_history, insurance_info, preferences, profile_picture) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
     [
       req.currentUser.id,
       first_name,
       last_name,
       date_of_birth,
       gender,
-      address,
       emergency_contact,
       medical_history,
       insurance_info,
