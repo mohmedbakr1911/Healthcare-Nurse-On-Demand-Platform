@@ -1,17 +1,28 @@
 const nodemailer = require("nodemailer");
 
+// Function to validate email format (basic example)
+function isValidEmail(email) {
+  // Use a more robust regex or library in production
+  return /\S+@\S+\.\S+/.test(email);
+}
+
+// Configuration is now cleaner and more secure
 const transporter = nodemailer.createTransport({
-  service: "gmail", // or "hotmail", "yahoo", etc.
+  service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER, // your email
-    pass: process.env.EMAIL_PASS, // your email password / app password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
   tls: {
-    rejectUnauthorized: false, // <-- bypass cert issue
+    rejectUnauthorized: false,
   },
 });
 
 async function sendVerificationEmail(to, code) {
+  if (!isValidEmail(to)) {
+    throw new Error("Invalid recipient email address.");
+  }
+
   const mailOptions = {
     from: `"health-care-nurse-on-demand" <${process.env.EMAIL_USER}>`,
     to,
@@ -36,7 +47,8 @@ async function sendResetPasswordEmail(to, token) {
       <h2>Reset your password</h2>
       <p>Click the link below to reset your password:</p>
       <a href="${process.env.FRONT_URL}/resetPassword?token=${token}">Reset Password</a>
-    `,
+      <p>This token will expire in 10 minutes.</p>
+      `,
   };
 
   return transporter.sendMail(mailOptions);

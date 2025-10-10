@@ -194,6 +194,13 @@ const resetPasswordRequest = asyncWrapper(async (req, res, next) => {
   const resetToken = tokenMiddleware.generateToken(user.rows[0]);
   await sendResetPasswordEmail(email, resetToken);
 
+  await pool.query(
+    `UPDATE credentials
+    SET reset_token = $1, reset_token_expires_at = $2
+    WHERE user_id = $3`,
+    [resetToken, new Date(Date.now() + 10 * 60 * 1000), user.rows[0].id]
+  );
+
   return res.status(200).json({
     status: httpStatusText.SUCCESS,
     message: "Reset password email sent",
@@ -209,17 +216,34 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
     );
   }
 
-  if (!req.currentUser)
+  if (!req.currentUser) {
     return next(
       appError.create("Invalid or expired token", 400, httpStatusText.FAIL)
     );
+  }
+
+  const credential = await pool.query(
+    `SELECT * FROM credentials
+    WHERE user_id = $1
+    AND reset_token = $2
+    AND reset_token_expires_at > NOW()`,
+    [req.currentUser.id, req.token]
+  );
+  if (credential.rows.length === 0) {
+    return next(
+      appError.create("Invalid or expired token", 400, httpStatusText.FAIL)
+    );
+  }
 
   const hashedPassword = await bcrypt.hash(new_password, 10);
   await pool.query(
-    "UPDATE credentials SET password_hash = $1 WHERE user_id = $2",
+    `UPDATE credentials
+    SET password_hash = $1,
+      reset_token = NULL,
+      reset_token_expires_at = NULL
+   WHERE user_id = $2`, // ONLY condition for filtering
     [hashedPassword, req.currentUser.id]
   );
-
   return res.status(200).json({
     status: httpStatusText.SUCCESS,
     message: "Password has been reset successfully",

@@ -15,7 +15,22 @@ const createPatientProfile = asyncWrapper(async (req, res, next) => {
     );
   }
 
-  const imagePath = req.file ? req.file.path : process.env.DEFAULT_AVATAR;
+  const images = req.files;
+
+  if (images["id_front"] === undefined || images["id_back"] === undefined) {
+    return next(
+      appError.create(
+        "ID front and back images are required",
+        400,
+        httpStatusText.FAIL
+      )
+    );
+  }
+  const imagePath = images["profile_picture"]
+    ? images["profile_picture"][0].path
+    : process.env.DEFAULT_AVATAR;
+  const idFrontPath = images["id_front"][0].path;
+  const idBackPath = images["id_back"][0].path;
 
   const {
     first_name,
@@ -27,6 +42,7 @@ const createPatientProfile = asyncWrapper(async (req, res, next) => {
     insurance_info,
     preferences,
   } = req.body;
+<<<<<<< HEAD
 
   // const newPatient = await pool.query(
   //   "INSERT INTO patient_profiles (user_id, first_name, last_name, date_of_birth, gender, emergency_contact, medical_history, insurance_info, preferences, profile_picture) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
@@ -48,6 +64,25 @@ const createPatientProfile = asyncWrapper(async (req, res, next) => {
     data:{first_name: first_name, last_name: last_name, date_of_birth: date_of_birth, gender: gender, emergency_contact: emergency_contact, medical_history: medical_history, insurance_info: insurance_info, preferences: preferences, profile_picture: imagePath}
   });
 
+=======
+  const newPatient = await pool.query(
+    "INSERT INTO patient_profiles (user_id, first_name, last_name, date_of_birth, gender, emergency_contact, medical_history, insurance_info, preferences, profile_picture, id_front, id_back) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *",
+    [
+      req.currentUser.id,
+      first_name,
+      last_name,
+      date_of_birth,
+      gender,
+      emergency_contact,
+      medical_history,
+      insurance_info,
+      preferences,
+      imagePath,
+      idFrontPath,
+      idBackPath,
+    ]
+  );
+>>>>>>> 0193da23db3eb7b3bf8fa99580b67c18fe325d9b
   if (!newPatient) {
     return next(
       appError.create(
@@ -81,21 +116,61 @@ const createNurseProfile = asyncWrapper(async (req, res, next) => {
       )
     );
   }
-  const imagePath = req.file ? req.file.path : process.env.DEFAULT_AVATAR;
+  const images = req.files;
+
+  if (images["id_front"] === undefined || images["id_back"] === undefined) {
+    return next(
+      appError.create(
+        "ID front and back images are required",
+        400,
+        httpStatusText.FAIL
+      )
+    );
+  }
+
+  const profilePicPath = images["profile_picture"]
+    ? images["profile_picture"][0].path
+    : process.env.DEFAULT_AVATAR;
+  const idFrontPath = images["id_front"][0].path;
+  const idBackPath = images["id_back"][0].path;
+  const goodConductPath = images["good_conduct_certificate"][0].path;
+  const syndicateCardPath = images["syndicate_card"][0].path;
+  const graduationCertPath = images["graduation_certificate"][0].path;
+
+  if (!goodConductPath)
+    return next(
+      appError.create(
+        "Good conduct certificate image is required",
+        400,
+        httpStatusText.FAIL
+      )
+    );
+
+  if (!syndicateCardPath)
+    return next(
+      appError.create("Syndicate Card is required", 400, httpStatusText.FAIL)
+    );
+
+  if (!graduationCertPath)
+    return next(
+      appError.create(
+        "Graduation Certificate image is required",
+        400,
+        httpStatusText.FAIL
+      )
+    );
+
+  const verification_status = { verified: false };
 
   const {
     first_name,
     last_name,
-    license_number,
-    license_state,
-    license_expiry,
     specializations,
     years_experience,
     hourly_rate,
     service_radius,
-    verification_status,
-    availability_schedule,
   } = req.body;
+<<<<<<< HEAD
   // const newNurse = await pool.query(
   //   "INSERT INTO nurse_profiles (user_id, first_name, last_name, license_number, license_state, license_expiry, specializations, years_experience, hourly_rate, service_radius, verification_status, availability_schedule, profile_picture) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *",
   //   [
@@ -121,6 +196,27 @@ const createNurseProfile = asyncWrapper(async (req, res, next) => {
   })
 
 
+=======
+  const newNurse = await pool.query(
+    "INSERT INTO nurse_profiles (user_id, first_name, last_name, specializations, years_experience, hourly_rate, service_radius, verification_status, profile_picture, id_front, id_back, good_conduct_certificate, syndicate_card, graduation_certificate) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *",
+    [
+      req.currentUser.id,
+      first_name,
+      last_name,
+      specializations,
+      years_experience,
+      hourly_rate,
+      service_radius,
+      verification_status,
+      profilePicPath,
+      idFrontPath,
+      idBackPath,
+      goodConductPath,
+      syndicateCardPath,
+      graduationCertPath,
+    ]
+  );
+>>>>>>> 0193da23db3eb7b3bf8fa99580b67c18fe325d9b
   if (!newNurse) {
     return next(
       appError.create("Nurse profile creation failed", 400, httpStatusText.FAIL)
