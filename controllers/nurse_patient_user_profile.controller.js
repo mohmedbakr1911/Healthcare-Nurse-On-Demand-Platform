@@ -2,6 +2,7 @@ const asyncWrapper = require("../middlewares/asyncWrapper");
 const pool = require("../db/db");
 const appError = require("../utils/appError");
 const httpStatusText = require("../utils/httpStatusText");
+const prisma = require("../prisma/prismaClient");
 
 const createPatientProfile = asyncWrapper(async (req, res, next) => {
   if (req.currentUser.user_type !== "patient") {
@@ -26,21 +27,27 @@ const createPatientProfile = asyncWrapper(async (req, res, next) => {
     insurance_info,
     preferences,
   } = req.body;
-  const newPatient = await pool.query(
-    "INSERT INTO patient_profiles (user_id, first_name, last_name, date_of_birth, gender, emergency_contact, medical_history, insurance_info, preferences, profile_picture) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
-    [
-      req.currentUser.id,
-      first_name,
-      last_name,
-      date_of_birth,
-      gender,
-      emergency_contact,
-      medical_history,
-      insurance_info,
-      preferences,
-      imagePath,
-    ]
-  );
+
+  // const newPatient = await pool.query(
+  //   "INSERT INTO patient_profiles (user_id, first_name, last_name, date_of_birth, gender, emergency_contact, medical_history, insurance_info, preferences, profile_picture) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
+  //   [
+  //     req.currentUser.id,
+  //     first_name,
+  //     last_name,
+  //     date_of_birth,
+  //     gender,
+  //     emergency_contact,
+  //     medical_history,
+  //     insurance_info,
+  //     preferences,
+  //     imagePath,
+  //   ]
+  // );
+
+  const newPatient = await prisma.patient_profiles.create({
+    data:{first_name: first_name, last_name: last_name, date_of_birth: date_of_birth, gender: gender, emergency_contact: emergency_contact, medical_history: medical_history, insurance_info: insurance_info, preferences: preferences, profile_picture: imagePath}
+  });
+
   if (!newPatient) {
     return next(
       appError.create(
@@ -50,9 +57,16 @@ const createPatientProfile = asyncWrapper(async (req, res, next) => {
       )
     );
   }
-  await pool.query("UPDATE users SET profile_created = TRUE WHERE id = $1", [
-    req.currentUser.id,
-  ]);
+
+  
+  // await pool.query("UPDATE users SET profile_created = TRUE WHERE id = $1", [
+  //   req.currentUser.id,
+  // ]);
+
+  await prisma.users.update({
+    where:{user_id: req.currentUser.id},
+    data: {profile_created: true}
+  })
 
   res.status(201).json({ status: httpStatusText.SUCCESS, data: null });
 });
@@ -82,24 +96,31 @@ const createNurseProfile = asyncWrapper(async (req, res, next) => {
     verification_status,
     availability_schedule,
   } = req.body;
-  const newNurse = await pool.query(
-    "INSERT INTO nurse_profiles (user_id, first_name, last_name, license_number, license_state, license_expiry, specializations, years_experience, hourly_rate, service_radius, verification_status, availability_schedule, profile_picture) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *",
-    [
-      req.currentUser.id,
-      first_name,
-      last_name,
-      license_number,
-      license_state,
-      license_expiry,
-      specializations,
-      years_experience,
-      hourly_rate,
-      service_radius,
-      verification_status,
-      availability_schedule,
-      imagePath,
-    ]
-  );
+  // const newNurse = await pool.query(
+  //   "INSERT INTO nurse_profiles (user_id, first_name, last_name, license_number, license_state, license_expiry, specializations, years_experience, hourly_rate, service_radius, verification_status, availability_schedule, profile_picture) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *",
+  //   [
+  //     req.currentUser.id,
+  //     first_name,
+  //     last_name,
+  //     license_number,
+  //     license_state,
+  //     license_expiry,
+  //     specializations,
+  //     years_experience,
+  //     hourly_rate,
+  //     service_radius,
+  //     verification_status,
+  //     availability_schedule,
+  //     imagePath,
+  //   ]
+  // );
+
+
+  const newNurse = await prisma.nurse_profiles.create({
+    data:{first_name: first_name, last_name: last_name, }
+  })
+
+
   if (!newNurse) {
     return next(
       appError.create("Nurse profile creation failed", 400, httpStatusText.FAIL)

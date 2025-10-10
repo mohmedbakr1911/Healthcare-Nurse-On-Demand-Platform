@@ -9,31 +9,34 @@ datasource db {
 }
 
 model credentials {
-  user_id           String            @id @db.Uuid
-  verification_code String?           @db.VarChar(255)
-  code_expires_at   DateTime?         @db.Timestamp(6)
-  password_hash     String?           @db.VarChar(255)
-  status            user_status_enum? @default(pending_verification)
-  users             users             @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_id                String            @id @db.Uuid
+  verification_code      String?           @db.VarChar(255)
+  code_expires_at        DateTime?         @db.Timestamp(6)
+  password_hash          String?           @db.VarChar(255)
+  status                 user_status_enum? @default(pending_verification)
+  reset_token            String?           @db.VarChar(400)
+  reset_token_expires_at DateTime?         @db.Timestamp(6)
+  users                  users             @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model nurse_profiles {
-  user_id               String    @id @db.Uuid
-  first_name            String    @db.VarChar(100)
-  last_name             String    @db.VarChar(100)
-  license_number        String    @db.VarChar(50)
-  license_state         String    @db.VarChar(10)
-  license_expiry        DateTime  @db.Date
-  specializations       String[]
-  years_experience      Int?
-  hourly_rate           Decimal?  @db.Decimal(10, 2)
-  service_radius        Int?      @default(10)
-  verification_status   Json?     @default("{}")
-  availability_schedule Json?     @default("{}")
-  created_at            DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at            DateTime? @default(now()) @db.Timestamptz(6)
-  profile_picture       String?   @db.VarChar(150)
-  users                 users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_id                  String    @id @db.Uuid
+  first_name               String    @db.VarChar(100)
+  last_name                String    @db.VarChar(100)
+  specializations          String[]
+  years_experience         Int?
+  hourly_rate              Decimal?  @db.Decimal(10, 2)
+  service_radius           Int?      @default(10)
+  verification_status      Json?     @default("{}")
+  created_at               DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime? @default(now()) @db.Timestamptz(6)
+  profile_picture          String?   @db.VarChar(150)
+  good_conduct_certificate String?   @db.VarChar(150)
+  id_front                 String?   @db.VarChar(150)
+  id_back                  String?   @db.VarChar(150)
+  syndicate_card           String?   @db.VarChar(150)
+  graduation_certificate   String?   @db.VarChar(150)
+  users                    users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model patient_profiles {
@@ -49,6 +52,8 @@ model patient_profiles {
   created_at        DateTime?   @default(now()) @db.Timestamptz(6)
   updated_at        DateTime?   @default(now()) @db.Timestamptz(6)
   profile_picture   String?     @db.VarChar(150)
+  id_front          String?     @db.VarChar(150)
+  id_back           String?     @db.VarChar(150)
   users             users       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
