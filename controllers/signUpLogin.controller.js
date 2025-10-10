@@ -11,6 +11,7 @@ const {
 } = require("../utils/emailService");
 const appError = require("../utils/appError");
 const httpStatusText = require("../utils/httpStatusText");
+const prisma = require("../prisma/prismaClient");
 
 const Signup = asyncWrapper(async (req, res, next) => {
   const { email, password, confirm_password, phone, user_type } = req.body;
@@ -32,15 +33,22 @@ const Signup = asyncWrapper(async (req, res, next) => {
 
   const expired_code_at = new Date(Date.now() + 10 * 60 * 1000);
 
-  const newUser = await pool.query(
-    "INSERT INTO users (email, phone, user_type, provider) VALUES ($1, $2, $3, $4) RETURNING *",
-    [email, phone, user_type, "local"]
-  );
+  // const newUser = await pool.query(
+  //   "INSERT INTO users (email, phone, user_type, provider) VALUES ($1, $2, $3, $4) RETURNING *",
+  //   [email, phone, user_type, "local"]
+  // );
 
-  const userCredentials = await pool.query(
-    "INSERT INTO credentials (user_id, password_hash, verification_code, code_expires_at) VALUES ($1, $2, $3, $4) RETURNING *",
-    [newUser.rows[0].id, hashedPassword, verifictionCode, expired_code_at]
-  );
+  const newUser = await prisma.users.create({
+    data:{email, phone, user_type, provider: "local"}
+  });
+
+  // const userCredentials = await pool.query(
+  //   "INSERT INTO credentials (user_id, password_hash, verification_code, code_expires_at) VALUES ($1, $2, $3, $4) RETURNING *",
+  //   [newUser.rows[0].id, hashedPassword, verifictionCode, expired_code_at]
+  // );
+  const userCredentials = await prisma.credentials.create({
+    data:{user_id: newUser.id, password_hash: hashedPassword, verification_code: verifictionCode, code_expires_at: expired_code_at}
+  });
 
   await sendVerificationEmail(email, verifictionCode);
 
@@ -58,15 +66,20 @@ const Signup = asyncWrapper(async (req, res, next) => {
 
 const signIn = asyncWrapper(async (req, res, next) => {
   const { email, password } = req.body;
-  const result = await pool.query(
-    `SELECT u.*, c.*
-    FROM users u
-    JOIN credentials c ON u.id = c.user_id
-    WHERE u.email = $1`,
-    [email]
-  );
+  // const result = await pool.query(
+  //   `SELECT u.*, c.*
+  //   FROM users u
+  //   JOIN credentials c ON u.id = c.user_id
+  //   WHERE u.email = $1`,
+  //   [email]
+  // );
 
-  if (result.rows.length === 0) {
+  const result = await prisma.users.findUnique({
+    where:{email: email},
+    include: {credentials: true}
+  });
+
+  if (!result) {
     return next(
       appError.create("Invalid email or password", 401, httpStatusText.FAIL)
     );
@@ -87,15 +100,21 @@ const signIn = asyncWrapper(async (req, res, next) => {
       100000 + Math.random() * 900000
     ).toString();
     const expired_code_at = new Date(Date.now() + 10 * 60 * 1000);
-    await pool.query(
-      `UPDATE credentials
-      SET verification_code = $1,
-          code_expires_at = $2
-      WHERE user_id = (
-        SELECT id FROM users WHERE email = $3
-      )`,
-      [verifictionCode, expired_code_at, email]
-    );
+    // await pool.query(
+    //   `UPDATE credentials
+    //   SET verification_code = $1,
+    //       code_expires_at = $2
+    //   WHERE user_id = (
+    //     SELECT id FROM users WHERE email = $3
+    //   )`,
+    //   [verifictionCode, expired_code_at, email]
+    // );
+
+    await prisma.credentials.update({
+      where:{user_id: result.id},
+      data: {verification_code: verifictionCode, code_expires_at: expired_code_at}
+    });
+
     await sendVerificationEmail(email, verifictionCode);
     return next(
       appError.create("Please Verify Email", 400, httpStatusText.FAIL)
@@ -125,6 +144,8 @@ const verifyEmail = asyncWrapper(async (req, res, next) => {
       AND c.code_expires_at > NOW()`,
     [email, code]
   );
+
+  
 
   if (!user.rows.length) {
     return next(
