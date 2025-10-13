@@ -229,11 +229,15 @@ const callback = asyncWrapper(async (req, res) => {
       data: { email, provider: "google" },
     });
     const token = tokenMiddleware.generateToken(newUser);
-    res.redirect(`${process.env.FRONT_URL}/completeData?token=${token}`);
+    // res.redirect(`${process.env.FRONT_URL}/completeData?token=${token}`);
+    res.redirect(`https://pharma-ai-front.vercel.app?token=${token}`);
+    return;
   }
 
+  console.log("user: ", user);
+
   const token = tokenMiddleware.generateToken(user);
-  res.redirect(`${process.env.FRONT_URL}?token=${token}`);
+  res.redirect(`https://pharma-ai-front.vercel.app?token=${token}`);
 });
 
 const completeData = asyncWrapper(async (req, res, next) => {
