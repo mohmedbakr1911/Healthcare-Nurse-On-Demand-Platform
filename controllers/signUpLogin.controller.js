@@ -220,7 +220,7 @@ const callback = asyncWrapper(async (req, res) => {
     where: { email },
   });
 
-  if (!user) {
+  if (!user || user.phone === null) {
     // const newUser = await pool.query(
     //   "INSERT INTO users (email, provider) VALUES ($1, $2) RETURNING *",
     //   [email, "google"]
