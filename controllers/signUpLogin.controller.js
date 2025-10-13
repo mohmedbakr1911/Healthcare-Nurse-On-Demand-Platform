@@ -216,25 +216,26 @@ const callback = asyncWrapper(async (req, res) => {
   //   email,
   // ]);
 
-  const user = await prisma.users.findUnique({
+  let user = await prisma.users.findUnique({
     where: { email },
   });
+  let isNewUser = false;
 
-  if (!user || user.phone === null) {
-    // const newUser = await pool.query(
-    //   "INSERT INTO users (email, provider) VALUES ($1, $2) RETURNING *",
-    //   [email, "google"]
-    // );
-    const newUser = await prisma.users.create({
+  if (!user) {
+    user = await prisma.users.create({
       data: { email, provider: "google" },
     });
-    const token = tokenMiddleware.generateToken(newUser);
-    res.redirect(`${process.env.FRONT_URL}/completeData?token=${token}`);
-    return;
+    isNewUser = true;
+  } else if (user.user_type === null || user.phone === null) {
+    isNewUser = true;
   }
 
   const token = tokenMiddleware.generateToken(user);
-  res.redirect(`${process.env.FRONT_URL}?token=${token}`);
+  res.redirect(
+    `${
+      process.env.FRONT_URL + (isNewUser ? "/completeData" : "")
+    }?token=${token}`
+  );
   return;
 });
 
