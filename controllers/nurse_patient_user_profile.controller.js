@@ -60,7 +60,17 @@ const createPatientProfile = asyncWrapper(async (req, res, next) => {
   // );
 
   const newPatient = await prisma.patient_profiles.create({
-    data:{first_name: first_name, last_name: last_name, date_of_birth: date_of_birth, gender: gender, emergency_contact: emergency_contact, medical_history: medical_history, insurance_info: insurance_info, preferences: preferences, profile_picture: imagePath}
+    data: {
+      first_name: first_name,
+      last_name: last_name,
+      date_of_birth: date_of_birth,
+      gender: gender,
+      emergency_contact: emergency_contact,
+      medical_history: medical_history,
+      insurance_info: insurance_info,
+      preferences: preferences,
+      profile_picture: imagePath,
+    },
   });
 
   if (!newPatient) {
@@ -73,15 +83,14 @@ const createPatientProfile = asyncWrapper(async (req, res, next) => {
     );
   }
 
-  
   // await pool.query("UPDATE users SET profile_created = TRUE WHERE id = $1", [
   //   req.currentUser.id,
   // ]);
 
   await prisma.users.update({
-    where:{user_id: req.currentUser.id},
-    data: {profile_created: true}
-  })
+    where: { user_id: req.currentUser.id },
+    data: { profile_created: true },
+  });
 
   res.status(201).json({ status: httpStatusText.SUCCESS, data: null });
 });
@@ -169,11 +178,9 @@ const createNurseProfile = asyncWrapper(async (req, res, next) => {
   //   ]
   // );
 
-
   const newNurse = await prisma.nurse_profiles.create({
-    data:{first_name: first_name, last_name: last_name, }
-  })
-
+    data: { first_name: first_name, last_name: last_name },
+  });
 
   if (!newNurse) {
     return next(
@@ -261,13 +268,24 @@ const getProfile = asyncWrapper(async (req, res, next) => {
 });
 
 const getNurses = asyncWrapper(async (req, res, next) => {
-  const nurses = await pool.query(
-    "SELECT user_id, availability_schedule, hourly_rate, specializations FROM nurse_profiles"
-  );
+  // const nurses = await pool.query(
+  //   "SELECT user_id,, hourly_rate, specializations FROM nurse_profiles"
+  // );
+  const nurses = await prisma.nurse_profiles.findMany({
+    select: {
+      user_id: true,
+      hourly_rate: true,
+      specializations: true,
+    },
+  });
 
-  const nursesWithLocation = nurses.rows.map((nurse) => ({
+  const nursesWithLocation = nurses.map((nurse) => ({
     ...nurse,
-    location: "Cairo",
+    // location: "Cairo",
+    location: {
+      lat: +(Math.random() * 180 - 90).toFixed(6),
+      lon: +(Math.random() * 360 - 180).toFixed(6),
+    },
   }));
 
   res.status(200).json({
