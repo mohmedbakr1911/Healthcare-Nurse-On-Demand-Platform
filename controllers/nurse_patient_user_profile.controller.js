@@ -43,33 +43,20 @@ const createPatientProfile = asyncWrapper(async (req, res, next) => {
     preferences,
   } = req.body;
 
-  // const newPatient = await pool.query(
-  //   "INSERT INTO patient_profiles (user_id, first_name, last_name, date_of_birth, gender, emergency_contact, medical_history, insurance_info, preferences, profile_picture) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
-  //   [
-  //     req.currentUser.id,
-  //     first_name,
-  //     last_name,
-  //     date_of_birth,
-  //     gender,
-  //     emergency_contact,
-  //     medical_history,
-  //     insurance_info,
-  //     preferences,
-  //     imagePath,
-  //   ]
-  // );
-
   const newPatient = await prisma.patient_profiles.create({
     data: {
       first_name: first_name,
       last_name: last_name,
-      date_of_birth: date_of_birth,
+      date_of_birth: new Date(date_of_birth),
       gender: gender,
       emergency_contact: emergency_contact,
       medical_history: medical_history,
       insurance_info: insurance_info,
       preferences: preferences,
       profile_picture: imagePath,
+      user_id: req.currentUser.id,
+      id_front: idFrontPath,
+      id_back: idBackPath,
     },
   });
 
@@ -88,7 +75,7 @@ const createPatientProfile = asyncWrapper(async (req, res, next) => {
   // ]);
 
   await prisma.users.update({
-    where: { user_id: req.currentUser.id },
+    where: { id: req.currentUser.id },
     data: { profile_created: true },
   });
 
