@@ -11,7 +11,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^6.17.0",
+    "@faker-js/faker": "^10.1.0",
+    "@prisma/client": "^6.17.1",
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",
@@ -33,6 +34,6 @@
     "validators": "^0.3.1"
   },
   "devDependencies": {
-    "prisma": "^6.17.0"
+    "prisma": "^6.17.1"
   }
 }

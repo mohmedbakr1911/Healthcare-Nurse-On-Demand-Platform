@@ -173,20 +173,39 @@ const verifyEmail = asyncWrapper(async (req, res, next) => {
 const callback = asyncWrapper(async (req, res) => {
   const email = req.user.emails[0].value;
 
+<<<<<<< HEAD
   const user = await prisma.users.findUnique({
+=======
+  // const user = await pool.query("SELECT * FROM users WHERE email = $1", [
+  //   email,
+  // ]);
+
+  let user = await prisma.users.findUnique({
+>>>>>>> 35135624cae8069c702032fce9013ca42afb0fdb
     where: { email },
   });
+  let isNewUser = false;
 
   if (!user) {
+<<<<<<< HEAD
     const newUser = await prisma.users.create({
+=======
+    user = await prisma.users.create({
+>>>>>>> 35135624cae8069c702032fce9013ca42afb0fdb
       data: { email, provider: "google" },
     });
-    const token = tokenMiddleware.generateToken(newUser);
-    res.redirect(`${process.env.FRONT_URL}/completeData?token=${token}`);
+    isNewUser = true;
+  } else if (user.user_type === null || user.phone === null) {
+    isNewUser = true;
   }
 
   const token = tokenMiddleware.generateToken(user);
-  res.redirect(`${process.env.FRONT_URL}?token=${token}`);
+  res.redirect(
+    `${
+      process.env.FRONT_URL + (isNewUser ? "/completeData" : "")
+    }?token=${token}`
+  );
+  return;
 });
 
 const completeData = asyncWrapper(async (req, res, next) => {

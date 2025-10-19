@@ -7,8 +7,10 @@ module.exports = new GoogleStrategy(
     callbackURL:
       "https://healthcarenurseondemand.vercel.app/api/auth/google/callback",
   },
-  async (accessToken, refreshToken, profile, done) => {
+  (accessToken, refreshToken, profile, done) => {
     // Here, you find or create the user in your DB
+    // console.log(profile);
+
     return done(null, profile);
   }
 );
