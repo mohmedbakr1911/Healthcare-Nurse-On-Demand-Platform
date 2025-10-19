@@ -4,6 +4,7 @@ const appError = require("../utils/appError");
 const httpStatusText = require("../utils/httpStatusText");
 const axios = require("axios");
 const { getAuthToken } = require("../utils/auth");
+const prisma = require("../prisma/prismaClient");
 const backendUrl = "https://healthcarenurseondemand.vercel.app";
 
 const createPayment = asyncWrapper(async (req, res, next) => {
@@ -21,13 +22,11 @@ const createPayment = asyncWrapper(async (req, res, next) => {
 const getPaymentKey = async (amountCents, user) => {
   const { orderId, token } = await createOrder(amountCents);
 
-  const query = `
-    SELECT * FROM "patient_profiles"
-    WHERE user_id = $1
-  `;
+  const result = await prisma.patient_profiles.findUnique({
+    where: { user_id: user.id },
+  });
 
-  const result = await pool.query(query, [user.id]);
-  const userData = result.rows[0];
+  const userData = result;
 
   console.log("user: ", user);
   console.log("userData: ", userData);

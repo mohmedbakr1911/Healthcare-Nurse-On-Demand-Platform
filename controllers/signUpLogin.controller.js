@@ -29,19 +29,12 @@ const Signup = asyncWrapper(async (req, res, next) => {
 
   const { expired_code_at, verifictionCode } = getVerificationCode();
 
-  // const newUser = await pool.query(
-  //   "INSERT INTO users (email, phone, user_type, provider) VALUES ($1, $2, $3, $4) RETURNING *",
-  //   [email, phone, user_type, "local"]
-  // );
 
   const newUser = await prisma.users.create({
     data: { email, phone, user_type, provider: "local" },
   });
 
-  // const userCredentials = await pool.query(
-  //   "INSERT INTO credentials (user_id, password_hash, verification_code, code_expires_at) VALUES ($1, $2, $3, $4) RETURNING *",
-  //   [newUser.rows[0].id, hashedPassword, verifictionCode, expired_code_at]
-  // );
+  
 
   await prisma.credentials.create({
     data: {
@@ -68,13 +61,6 @@ const Signup = asyncWrapper(async (req, res, next) => {
 
 const signIn = asyncWrapper(async (req, res, next) => {
   const { email, password } = req.body;
-  // const result = await pool.query(
-  //   `SELECT u.*, c.*
-  //   FROM users u
-  //   JOIN credentials c ON u.id = c.user_id
-  //   WHERE u.email = $1`,
-  //   [email]
-  // );
 
   const result = await prisma.users.findUnique({
     where: { email: email },
@@ -99,16 +85,6 @@ const signIn = asyncWrapper(async (req, res, next) => {
 
   if (result.credentials.status !== "active") {
     const { expired_code_at, verifictionCode } = getVerificationCode();
-
-    // await pool.query(
-    //   `UPDATE credentials
-    //   SET verification_code = $1,
-    //       code_expires_at = $2
-    //   WHERE user_id = (
-    //     SELECT id FROM users WHERE email = $3
-    //   )`,
-    //   [verifictionCode, expired_code_at, email]
-    // );
 
     await prisma.credentials.update({
       where: { user_id: result.id },
@@ -137,16 +113,6 @@ const signIn = asyncWrapper(async (req, res, next) => {
 
 const verifyEmail = asyncWrapper(async (req, res, next) => {
   const { email, code } = req.body;
-
-  // const user = await pool.query(
-  //   `SELECT u.*
-  //     FROM users u
-  //     JOIN credentials c ON u.id = c.user_id
-  //     WHERE u.email = $1
-  //     AND c.verification_code = $2
-  //     AND c.code_expires_at > NOW()`,
-  //   [email, code]
-  // );
 
   const user = await prisma.users.findUnique({
     where: { email },
@@ -188,11 +154,6 @@ const verifyEmail = asyncWrapper(async (req, res, next) => {
     );
   }
 
-  // await pool.query(
-  //   "UPDATE credentials SET status = 'active', verification_code = NULL, code_expires_at = NULL WHERE user_id = $1",
-  //   [user.rows[0].id]
-  // );
-
   await prisma.credentials.update({
     where: { user_id: user.id },
     data: {
@@ -212,19 +173,11 @@ const verifyEmail = asyncWrapper(async (req, res, next) => {
 const callback = asyncWrapper(async (req, res) => {
   const email = req.user.emails[0].value;
 
-  // const user = await pool.query("SELECT * FROM users WHERE email = $1", [
-  //   email,
-  // ]);
-
   const user = await prisma.users.findUnique({
     where: { email },
   });
 
   if (!user) {
-    // const newUser = await pool.query(
-    //   "INSERT INTO users (email, provider) VALUES ($1, $2) RETURNING *",
-    //   [email, "google"]
-    // );
     const newUser = await prisma.users.create({
       data: { email, provider: "google" },
     });
@@ -238,27 +191,32 @@ const callback = asyncWrapper(async (req, res) => {
 
 const completeData = asyncWrapper(async (req, res, next) => {
   const { user_type, phone } = req.body;
-  const updatedUser = await pool.query(
-    "UPDATE users SET user_type = $1, phone = $2 WHERE id = $3 RETURNING *",
-    [user_type, phone, req.currentUser.id]
-  );
+  if (!["nurse", "patient"].includes(user_type)) {
+    return next(
+      appError.create(
+        "Invalid user type",
+        400,
+        httpStatusText.FAIL
+      )
+    );
+  }
+  const updatedUser = await prisma.users.update({
+    where: { id: req.currentUser.id },
+    data: { user_type, phone },
+  });
 
-  const token = tokenMiddleware.generateToken(updatedUser.rows[0]);
+  const token = tokenMiddleware.generateToken(updatedUser);
 
   return res.status(200).json({
     status: httpStatusText.SUCCESS,
     data: {
       access_token: token,
-      // refresh_token: token
     },
   });
 });
 
 const resetPasswordRequest = asyncWrapper(async (req, res, next) => {
   const { email } = req.body;
-  // const user = await pool.query("SELECT * FROM users WHERE email = $1", [
-  //   email,
-  // ]);
 
   const user = await prisma.users.findUnique({
     where: { email },
@@ -280,12 +238,6 @@ const resetPasswordRequest = asyncWrapper(async (req, res, next) => {
   const resetToken = tokenMiddleware.generateToken(user);
   await sendResetPasswordEmail(email, resetToken);
 
-  // await pool.query(
-  //   `UPDATE credentials
-  //   SET reset_token = $1, reset_token_expires_at = $2
-  //   WHERE user_id = $3`,
-  //   [resetToken, new Date(Date.now() + 10 * 60 * 1000), user.id]
-  // );
   const updated = await prisma.credentials.update({
     where: { user_id: user.id },
     data: {
@@ -320,14 +272,6 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
     );
   }
 
-  // const credential = await pool.query(
-  //   `SELECT * FROM credentials
-  //   WHERE user_id = $1
-  //   AND reset_token = $2
-  //   AND reset_token_expires_at > NOW()`,
-  //   [req.currentUser.id, req.token]
-  // );
-
   const credential = await prisma.credentials.findFirst({
     where: {
       user_id: req.currentUser.id,
@@ -345,14 +289,7 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
   }
 
   const hashedPassword = await bcrypt.hash(new_password, 10);
-  // await pool.query(
-  //   `UPDATE credentials
-  //   SET password_hash = $1,
-  //     reset_token = NULL,
-  //     reset_token_expires_at = NULL
-  //  WHERE user_id = $2`, // ONLY condition for filtering
-  //   [hashedPassword, req.currentUser.id]
-  // );
+
 
   const updated = await prisma.credentials.update({
     where: { user_id: req.currentUser.id },
