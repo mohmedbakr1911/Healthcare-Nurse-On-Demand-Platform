@@ -58,13 +58,7 @@ router
     nurseUploadFields,
     nurse_patient_user_profile_controller.createNurseProfile
   )
-  .get(apiKeyAuth, nurse_patient_user_profile_controller.getNurses)
-  
-  router.get(
-  "/all-nurses",
-  apiKeyAuth,
-  nurse_patient_user_profile_controller.getAllNurses
-);
+  .get(apiKeyAuth, nurse_patient_user_profile_controller.getNurses);
 
 router
   .route("/")
