@@ -43,10 +43,6 @@ const createPatientProfile = asyncWrapper(async (req, res, next) => {
     preferences,
   } = req.body;
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 35135624cae8069c702032fce9013ca42afb0fdb
   const newPatient = await prisma.patient_profiles.create({
     data: {
       first_name: first_name,
@@ -74,14 +70,6 @@ const createPatientProfile = asyncWrapper(async (req, res, next) => {
     );
   }
 
-<<<<<<< HEAD
-  
-=======
-  // await pool.query("UPDATE users SET profile_created = TRUE WHERE id = $1", [
-  //   req.currentUser.id,
-  // ]);
-
->>>>>>> 35135624cae8069c702032fce9013ca42afb0fdb
   await prisma.users.update({
     where: { id: req.currentUser.id },
     data: { profile_created: true },
@@ -154,27 +142,6 @@ const createNurseProfile = asyncWrapper(async (req, res, next) => {
     hourly_rate,
     service_radius,
   } = req.body;
-<<<<<<< HEAD
-=======
-  // const newNurse = await pool.query(
-  //   "INSERT INTO nurse_profiles (user_id, first_name, last_name, license_number, license_state, license_expiry, specializations, years_experience, hourly_rate, service_radius, verification_status, availability_schedule, profile_picture) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *",
-  //   [
-  //     req.currentUser.id,
-  //     first_name,
-  //     last_name,
-  //     license_number,
-  //     license_state,
-  //     license_expiry,
-  //     specializations,
-  //     years_experience,
-  //     hourly_rate,
-  //     service_radius,
-  //     verification_status,
-  //     availability_schedule,
-  //     imagePath,
-  //   ]
-  // );
->>>>>>> 35135624cae8069c702032fce9013ca42afb0fdb
 
   const newNurse = await prisma.nurse_profiles.create({
     data: { first_name: first_name, last_name: last_name },
