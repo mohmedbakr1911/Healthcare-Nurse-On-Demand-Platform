@@ -233,9 +233,7 @@ const getProfile = asyncWrapper(async (req, res, next) => {
 });
 
 const getNurses = asyncWrapper(async (req, res, next) => {
-  // const nurses = await pool.query(
-  //   "SELECT user_id,, hourly_rate, specializations FROM nurse_profiles"
-  // );
+  
   const nurses = await prisma.nurse_profiles.findMany({
     select: {
       user_id: true,
@@ -259,10 +257,20 @@ const getNurses = asyncWrapper(async (req, res, next) => {
   });
 });
 
+
+const getAllNurses = asyncWrapper(async (req, res, next) => {
+  const nurses = await prisma.nurse_profiles.findMany();
+  res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    data: nurses,
+  });
+});
+
 module.exports = {
   createPatientProfile,
   createNurseProfile,
   updateProfile,
   getProfile,
   getNurses,
+  getAllNurses,
 };
