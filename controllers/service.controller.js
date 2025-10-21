@@ -4,12 +4,8 @@ const appError = require("../utils/appError.js");
 const httpStatusText = require("../utils/httpStatusText.js");
 const asyncWrapper = require("../middlewares/asyncWrapper.js");
 const prisma = require("../prisma/prismaClient");
-<<<<<<< HEAD
 const { tr } = require("@faker-js/faker");
 const { getIO } = require("../ioServer");
-=======
->>>>>>> 80cd1f95035e2a755f42cb1eea8dbfeffdb48f33
-
 const createServiceRequest = asyncWrapper(async (req, res, next) => {
   const io = getIO();
   const currentUser = req.currentUser;
