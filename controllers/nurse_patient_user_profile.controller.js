@@ -233,18 +233,11 @@ const getProfile = asyncWrapper(async (req, res, next) => {
 });
 
 const getNurses = asyncWrapper(async (req, res, next) => {
-  
-  const nurses = await prisma.nurse_profiles.findMany({
-    select: {
-      user_id: true,
-      hourly_rate: true,
-      specializations: true,
-    },
-  });
+  const nurses = await prisma.nurse_profiles.findMany();
 
   const nursesWithLocation = nurses.map((nurse) => ({
     ...nurse,
-    // location: "Cairo",
+
     location: {
       lat: +(Math.random() * 180 - 90).toFixed(6),
       lon: +(Math.random() * 360 - 180).toFixed(6),
@@ -257,20 +250,10 @@ const getNurses = asyncWrapper(async (req, res, next) => {
   });
 });
 
-
-const getAllNurses = asyncWrapper(async (req, res, next) => {
-  const nurses = await prisma.nurse_profiles.findMany();
-  res.status(200).json({
-    status: httpStatusText.SUCCESS,
-    data: nurses,
-  });
-});
-
 module.exports = {
   createPatientProfile,
   createNurseProfile,
   updateProfile,
   getProfile,
   getNurses,
-  getAllNurses,
 };

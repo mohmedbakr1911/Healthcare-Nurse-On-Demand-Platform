@@ -4,7 +4,6 @@ const error = require("../utils/appError");
 const bcrypt = require("bcrypt");
 const tokenMiddleware = require("../middlewares/Token");
 const validator = require("validator");
-const crypto = require("crypto");
 const {
   sendVerificationEmail,
   sendResetPasswordEmail,
@@ -29,12 +28,9 @@ const Signup = asyncWrapper(async (req, res, next) => {
 
   const { expired_code_at, verifictionCode } = getVerificationCode();
 
-
   const newUser = await prisma.users.create({
     data: { email, phone, user_type, provider: "local" },
   });
-
-  
 
   await prisma.credentials.create({
     data: {
@@ -199,13 +195,7 @@ const callback = asyncWrapper(async (req, res) => {
 const completeData = asyncWrapper(async (req, res, next) => {
   const { user_type, phone } = req.body;
   if (!["nurse", "patient"].includes(user_type)) {
-    return next(
-      appError.create(
-        "Invalid user type",
-        400,
-        httpStatusText.FAIL
-      )
-    );
+    return next(appError.create("Invalid user type", 400, httpStatusText.FAIL));
   }
   const updatedUser = await prisma.users.update({
     where: { id: req.currentUser.id },
@@ -296,7 +286,6 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
   }
 
   const hashedPassword = await bcrypt.hash(new_password, 10);
-
 
   const updated = await prisma.credentials.update({
     where: { user_id: req.currentUser.id },
