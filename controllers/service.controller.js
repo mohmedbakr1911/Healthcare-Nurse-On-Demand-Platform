@@ -4,7 +4,6 @@ const appError = require("../utils/appError.js");
 const httpStatusText = require("../utils/httpStatusText.js");
 const asyncWrapper = require("../middlewares/asyncWrapper.js");
 const prisma = require("../prisma/prismaClient");
-const { tr } = require("@faker-js/faker");
 const { getIO } = require("../ioServer");
 const createServiceRequest = asyncWrapper(async (req, res, next) => {
   const io = getIO();
