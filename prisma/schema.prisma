@@ -72,6 +72,7 @@ model service_requests {
   total_amount                             Decimal?             @db.Decimal(10, 2)
   created_at                               DateTime?            @default(now()) @db.Timestamptz(6)
   updated_at                               DateTime?            @default(now()) @db.Timestamptz(6)
+  offers                                   offers[]
   users_service_requests_nurse_idTousers   users?               @relation("service_requests_nurse_idTousers", fields: [nurse_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users_service_requests_patient_idTousers users                @relation("service_requests_patient_idTousers", fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   transactions                             transactions[]
@@ -106,11 +107,27 @@ model users {
   profile_created                                     Boolean?           @default(false)
   credentials                                         credentials?
   nurse_profiles                                      nurse_profiles?
+  offers                                              offers[]
   patient_profiles                                    patient_profiles?
   service_requests_service_requests_nurse_idTousers   service_requests[] @relation("service_requests_nurse_idTousers")
   service_requests_service_requests_patient_idTousers service_requests[] @relation("service_requests_patient_idTousers")
   transactions_transactions_nurse_idTousers           transactions[]     @relation("transactions_nurse_idTousers")
   transactions_transactions_patient_idTousers         transactions[]     @relation("transactions_patient_idTousers")
+}
+
+model offers {
+  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  service_request_id String             @db.Uuid
+  nurse_id           String             @db.Uuid
+  offered_amount     Decimal            @db.Decimal(10, 2)
+  message            String?            @db.VarChar(300)
+  status             offer_status_enum? @default(pending)
+  created_at         DateTime?          @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime?          @default(now()) @db.Timestamptz(6)
+  users              users              @relation(fields: [nurse_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  service_requests   service_requests   @relation(fields: [service_request_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([nurse_id, service_request_id])
 }
 
 enum gender_enum {
@@ -145,4 +162,11 @@ enum user_status_enum {
 enum user_type_enum {
   patient
   nurse
+}
+
+enum offer_status_enum {
+  pending
+  accepted
+  rejected
+  expired
 }

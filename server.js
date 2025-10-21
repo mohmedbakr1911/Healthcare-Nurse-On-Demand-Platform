@@ -2,9 +2,11 @@ const express = require("express");
 const pool = require("./db/db");
 const app = express();
 const port = 3000;
-
+const http = require("http");
+const server = http.createServer(app);
+const { initSocket, getIO } = require("./ioServer");
+const { setupNurseOfferSockets } = require("./controllers/nursesOffers.controller");
 const cors = require("cors");
-
 const httpStatusText = require("./utils/httpStatusText");
 
 const signUpLoginRouter = require("./routes/signUpLogin.route");
@@ -15,6 +17,11 @@ const paymentRouter = require("./routes/payment.route");
 const passport = require("passport");
 const session = require("express-session");
 const passportSetup = require("./utils/passport_setup");
+
+// Initialize Socket.io
+initSocket(server);
+const io = getIO();
+setupNurseOfferSockets(io);
 
 // Session middleware
 app.use(
@@ -63,7 +70,7 @@ app.use((error, req, res, next) => {
   });
 });
 
-app.listen(port, async () => {
+server.listen(port, async () => {
   const connected = (await pool.connect()) ? true : false;
   console.log();
   console.log(`Database connection: ${connected}` + "\n");
