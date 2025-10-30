@@ -1,4 +1,4 @@
-const nursesOfferController = require('../controllers/nursesOffer.controller');
+const nursesOfferController = require('../controllers/nursesOffers.controller.js');
 const { getIO } = require('../ioServer');   
 const express = require('express');
 const router = express.Router();    
