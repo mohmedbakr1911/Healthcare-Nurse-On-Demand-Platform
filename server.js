@@ -13,7 +13,7 @@ const signUpLoginRouter = require("./routes/signUpLogin.route");
 const nurse_patient_user_profile = require("./routes/nurse_patient_user_profile.route");
 const serviceRouter = require("./routes/service.route");
 const paymentRouter = require("./routes/payment.route");
-
+const offerRouter = require("./routes/offer.route");
 const passport = require("passport");
 const session = require("express-session");
 const passportSetup = require("./utils/passport_setup");
@@ -50,6 +50,7 @@ app.use(express.json());
 app.use("/api/auth", signUpLoginRouter);
 app.use("/api/profile", nurse_patient_user_profile);
 app.use("/api/service", serviceRouter);
+app.use("/api/offer", offerRouter);
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.json());
