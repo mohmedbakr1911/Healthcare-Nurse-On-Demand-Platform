@@ -232,14 +232,15 @@ const resetPasswordRequest = asyncWrapper(async (req, res, next) => {
     );
   }
 
-  const resetToken = tokenMiddleware.generateToken(user);
-  await sendResetPasswordEmail(email, resetToken);
+  const { expired_code_at, verifictionCode: reset_code } =
+    getVerificationCode();
+  await sendResetPasswordEmail(email, reset_code);
 
   const updated = await prisma.credentials.update({
     where: { user_id: user.id },
     data: {
-      reset_token: resetToken,
-      reset_token_expires_at: new Date(Date.now() + 10 * 60 * 1000),
+      reset_code: reset_code,
+      reset_code_expires_at: expired_code_at,
     },
   });
 
@@ -255,7 +256,7 @@ const resetPasswordRequest = asyncWrapper(async (req, res, next) => {
 });
 
 const resetPassword = asyncWrapper(async (req, res, next) => {
-  const { new_password, confirm_password } = req.body;
+  const { email, new_password, confirm_password, code } = req.body;
 
   if (new_password !== confirm_password) {
     return next(
@@ -263,17 +264,15 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
     );
   }
 
-  if (!req.currentUser) {
-    return next(
-      appError.create("Invalid or expired token", 400, httpStatusText.FAIL)
-    );
-  }
+  const user = await prisma.users.findUnique({
+    where: { email },
+  });
 
   const credential = await prisma.credentials.findFirst({
     where: {
-      user_id: req.currentUser.id,
-      reset_token: req.token,
-      reset_token_expires_at: {
+      user_id: user.id,
+      reset_code: code,
+      reset_code_expires_at: {
         gt: new Date(),
       },
     },
@@ -288,11 +287,11 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
   const hashedPassword = await bcrypt.hash(new_password, 10);
 
   const updated = await prisma.credentials.update({
-    where: { user_id: req.currentUser.id },
+    where: { user_id: user.id },
     data: {
       password_hash: hashedPassword,
-      reset_token: null,
-      reset_token_expires_at: null,
+      reset_code: null,
+      reset_code_expires_at: null,
     },
   });
 

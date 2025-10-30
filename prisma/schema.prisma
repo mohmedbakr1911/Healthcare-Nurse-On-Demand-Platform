@@ -9,14 +9,14 @@ datasource db {
 }
 
 model credentials {
-  user_id                String            @id @db.Uuid
-  verification_code      String?           @db.VarChar(255)
-  code_expires_at        DateTime?         @db.Timestamp(6)
-  password_hash          String?           @db.VarChar(255)
-  status                 user_status_enum? @default(pending_verification)
-  reset_token            String?           @db.VarChar(400)
-  reset_token_expires_at DateTime?         @db.Timestamp(6)
-  users                  users             @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_id               String            @id @db.Uuid
+  verification_code     String?           @db.VarChar(6)
+  code_expires_at       DateTime?         @db.Timestamp(6)
+  password_hash         String?           @db.VarChar(255)
+  status                user_status_enum? @default(pending_verification)
+  reset_code            String?           @db.VarChar(6)
+  reset_code_expires_at DateTime?         @db.Timestamp(6)
+  users                 users             @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.

@@ -38,16 +38,16 @@ async function sendVerificationEmail(to, code) {
   return transporter.sendMail(mailOptions);
 }
 
-async function sendResetPasswordEmail(to, token) {
+async function sendResetPasswordEmail(to, code) {
   const mailOptions = {
     from: `"health-care-nurse-on-demand" <${process.env.EMAIL_USER}>`,
     to,
     subject: "Reset your password",
     html: `
-      <h2>Reset your password</h2>
-      <p>Click the link below to reset your password:</p>
-      <a href="${process.env.FRONT_URL}/resetPassword?token=${token}">Reset Password</a>
-      <p>This token will expire in 10 minutes.</p>
+      <h2>Welcome</h2>
+      <p>Enter the code below to reset your email:</p>
+      <h1>${code}</h1>
+      <p>This code will expire in 10 minutes.</p>
       `,
   };
 

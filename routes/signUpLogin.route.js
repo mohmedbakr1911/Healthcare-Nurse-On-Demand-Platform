@@ -23,10 +23,6 @@ router.post(
   "/resetPasswordRequest",
   signUpLoginController.resetPasswordRequest
 );
-router.patch(
-  "/resetPassword",
-  verifyToken,
-  signUpLoginController.resetPassword
-);
+router.patch("/resetPassword", signUpLoginController.resetPassword);
 
 module.exports = router;
