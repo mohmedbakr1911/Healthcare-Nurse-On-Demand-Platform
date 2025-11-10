@@ -1,8 +1,8 @@
 // nursesOffers.controller.js
 const prisma = require("../prisma/prismaClient");
-const { getIO } = require("../ioServer");
+const { io } = require("../ioServer");
 
-function setupNurseOfferSockets(io) {
+const setupNurseOfferSockets = (io) => {
   io.on("connection", (socket) => {
     console.log("🟢 Nurse offer socket connected:", socket.id);
 
@@ -38,6 +38,6 @@ function setupNurseOfferSockets(io) {
       console.log("🔴 Socket disconnected:", socket.id);
     });
   });
-}
+};
 
 module.exports = { setupNurseOfferSockets };
