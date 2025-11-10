@@ -23,6 +23,10 @@ router.post(
   "/resetPasswordRequest",
   signUpLoginController.resetPasswordRequest
 );
+router.post(
+  "/checkPasswordResetCode",
+  signUpLoginController.checkPasswordResetCode
+);
 router.patch("/resetPassword", signUpLoginController.resetPassword);
 
 module.exports = router;

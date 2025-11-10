@@ -255,8 +255,41 @@ const resetPasswordRequest = asyncWrapper(async (req, res, next) => {
   });
 });
 
+const checkPasswordResetCode = asyncWrapper(async (req, res, next) => {
+  const { email, code } = req.body;
+  const user = await prisma.users.findUnique({
+    where: { email },
+  });
+  const credential = await prisma.credentials.findFirst({
+    where: {
+      user_id: user.id,
+      reset_code: code,
+      reset_code_expires_at: {
+        gt: new Date(),
+      },
+    },
+  });
+  if (!credential) {
+    return next(
+      appError.create("Invalid or expired code", 400, httpStatusText.FAIL)
+    );
+  }
+
+  await prisma.credentials.update({
+    where: { user_id: user.id },
+    data: {
+      reset_code: null,
+      reset_code_expires_at: null,
+      reset_verified: true,
+    },
+  });
+  return res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    message: "Valid reset code",
+  });
+});
 const resetPassword = asyncWrapper(async (req, res, next) => {
-  const { email, new_password, confirm_password, code } = req.body;
+  const { email, new_password, confirm_password } = req.body;
 
   if (new_password !== confirm_password) {
     return next(
@@ -268,19 +301,16 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
     where: { email },
   });
 
-  const credential = await prisma.credentials.findFirst({
-    where: {
-      user_id: user.id,
-      reset_code: code,
-      reset_code_expires_at: {
-        gt: new Date(),
-      },
-    },
-  });
+  if (!user) {
+    return next(appError.create("User not found", 404, httpStatusText.FAIL));
+  }
 
-  if (!credential) {
+  const credential = await prisma.credentials.findUnique({
+    where: { user_id: user.id },
+  });
+  if (!credential || !credential.reset_verified) {
     return next(
-      appError.create("Invalid or expired token", 400, httpStatusText.FAIL)
+      appError.create("Reset not verified", 400, httpStatusText.FAIL)
     );
   }
 
@@ -290,8 +320,7 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
     where: { user_id: user.id },
     data: {
       password_hash: hashedPassword,
-      reset_code: null,
-      reset_code_expires_at: null,
+      reset_verified: false,
     },
   });
 
@@ -322,5 +351,6 @@ module.exports = {
   callback,
   completeData,
   resetPasswordRequest,
+  checkPasswordResetCode,
   resetPassword,
 };

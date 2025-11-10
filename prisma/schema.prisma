@@ -16,6 +16,7 @@ model credentials {
   status                user_status_enum? @default(pending_verification)
   reset_code            String?           @db.VarChar(6)
   reset_code_expires_at DateTime?         @db.Timestamp(6)
+  reset_verified        Boolean?          @default(false)
   users                 users             @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
